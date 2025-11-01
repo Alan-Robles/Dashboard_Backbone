@@ -9,9 +9,11 @@ from sklearn.cluster import KMeans
 import dash
 from dash import dcc, html
 
-clinicas_backbone = pd.read_csv('/Users/alanrobles/Documents/GEOSTATS/CSV descragados (data)/clinicas_con_ageb_y_nse.csv')
-# clinicas_backbone = clinicas_backbone.dropna(subset=['latitud', 'longitud'])
-enfermedades_municipios = pd.read_csv('/Users/alanrobles/Documents/GEOSTATS/Codigo/backbone/data/Datos_por_municipio.csv')
+url_clinicas = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/clinicas_con_ageb_y_nse.csv"
+url_enfermedades = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/Datos_por_municipio.csv"
+
+clinicas_backbone = pd.read_csv(url_clinicas)
+enfermedades_municipios = pd.read_csv(url_enfermedades)# clinicas_backbone = clinicas_backbone.dropna(subset=['latitud', 'longitud'])
 
 agrupacion = {
     'Alto': 'Alto',
