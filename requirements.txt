@@ -10,3 +10,4 @@ branca==0.8.1
 requests==2.32.3
 altair==5.5.0
 streamlit==1.50.0
+geopandas==1.0.1
