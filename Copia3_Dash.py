@@ -9,11 +9,9 @@ from sklearn.cluster import KMeans
 import dash
 from dash import dcc, html
 
-url_clinicas = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/clinicas_con_ageb_y_nse.csv"
-url_enfermedades = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/Datos_por_municipio.csv"
-
-clinicas_backbone = pd.read_csv(url_clinicas)
-enfermedades_municipios = pd.read_csv(url_enfermedades)# clinicas_backbone = clinicas_backbone.dropna(subset=['latitud', 'longitud'])
+clinicas_backbone = pd.read_csv('/Users/alanrobles/Documents/GEOSTATS/CSV descragados (data)/clinicas_con_ageb_y_nse.csv')
+# clinicas_backbone = clinicas_backbone.dropna(subset=['latitud', 'longitud'])
+enfermedades_municipios = pd.read_csv('/Users/alanrobles/Documents/GEOSTATS/Codigo/backbone/data/Datos_por_municipio.csv')
 
 agrupacion = {
     'Alto': 'Alto',
@@ -31,9 +29,6 @@ agrupacion = {
 # Crear nueva columna o sobrescribir
 clinicas_backbone['NSE_final'] = clinicas_backbone['NSE'].map(agrupacion)
 merged = clinicas_backbone.merge(enfermedades_municipios, left_on=['State','Municipality'], right_on=['NOM_ENT','NOM_MUN'])
-
-
-
 
 ## Gráfico 1
 
@@ -352,6 +347,166 @@ fig_16 = px.pie(
 fig_16.update_traces(textinfo='percent+label', pull=[0.05]*len(nse_counts))
 fig_16.update_layout(title_font_size=16)
 
+merged = merged.rename(columns={'Specialty of the \nMedical Equipment': 'Specialty of the Medical Equipment'})
+
+# Paso 1: contar cuántas clínicas hay por especialidad
+counts = merged['Specialty of the Medical Equipment'].value_counts().reset_index()
+counts.columns = ['Specialty of the Medical Equipment', 'Count']
+
+# Paso 2: calcular porcentaje
+counts['Percentage'] = 100 * counts['Count'] / counts['Count'].sum()
+
+# Paso 3: agrupar las especialidades con <5% en "Others"
+others = counts[counts['Percentage'] < 5]['Count'].sum()
+main = counts[counts['Percentage'] >= 5].copy()
+
+# agregar la categoría Others
+if others > 0:
+    main.loc[len(main)] = ['Others', others, 100 * others / counts['Count'].sum()]
+
+# Paso 4: graficar
+fig_17 = px.pie(
+    main,
+    names='Specialty of the Medical Equipment',
+    values='Count',
+    title='Distribución de especialidades de clínicas (agrupadas <5%)',
+    color='Specialty of the Medical Equipment',
+    hover_data=['Percentage']
+)
+
+fig_17.update_traces(
+    textposition='inside',
+    textinfo='percent+label',
+    hoverinfo='label+percent+name'
+)
+
+# === FIGURA 18 ===
+clinicas_backbone = clinicas_backbone.rename(columns={'Specialty of the \nMedical Equipment': 'Specialty of the Medical Equipment'})
+fig_18 = px.scatter_mapbox(
+    clinicas_backbone,
+    lat='latitud',
+    lon='longitud',
+    hover_name='Clinic Aid Code',
+    hover_data={
+        'Specialty of the Medical Equipment': True,
+    },
+    color='Specialty of the Medical Equipment',
+    color_discrete_sequence=px.colors.sequential.Viridis,
+    mapbox_style='open-street-map',
+    zoom=4,
+    height=600,
+    title='Mapa de Clínicas Backbone por # Consultas por Mes'
+)
+
+fig_18.update_layout(
+    title_font_size=18,
+    margin=dict(l=20, r=20, t=60, b=20),
+    mapbox=dict(center=dict(lat=23.6345, lon=-102.5528)),  # Centrado en México
+)
+
+fig_18.update_traces(
+    marker=dict(size=12),
+    selector=dict(mode='markers')
+)
+
+# Paso 1: calcular promedio de consultas por especialidad
+promedios = (
+    clinicas_backbone
+    .groupby('Specialty of the Medical Equipment', as_index=False)
+    ['Number of \nConsultations per Month']
+    .mean()
+)
+
+# Paso 2: graficar los promedios
+fig_19 = px.bar(
+    promedios,
+    x='Specialty of the Medical Equipment',
+    y='Number of \nConsultations per Month',
+    title='Promedio de Consultas por Especialidad',
+    hover_data={
+        'Number of \nConsultations per Month': ':.2f',
+    },
+    color='Specialty of the Medical Equipment',  # opcional: colorear por especialidad
+)
+
+# Paso 3: personalizar diseño
+fig_19.update_layout(
+    xaxis_title='Especialidad',
+    yaxis_title='Promedio de Consultas por Mes',
+    xaxis_tickangle=-45,
+    showlegend=False,  # ocultar leyenda si no es necesaria
+    title_font_size=16,
+    xaxis_title_font_size=12,
+    yaxis_title_font_size=12
+)
+
+fig_20 = px.bar(
+    merged,
+    x='NSE_final',
+    y='Number of \nConsultations per Month',
+    title='Total de Consultas por NSE',
+    hover_data={
+        'Number of \nConsultations per Month': ':.2f',
+    },
+    color='NSE_final',  # opcional: colorear por especialidad
+)
+
+fig_20.update_layout(
+    xaxis_title='NSE',
+    yaxis_title='Total de Consultas por Mes',
+    xaxis_tickangle=-45,
+    showlegend=False,  # ocultar leyenda si no es necesaria
+    title_font_size=16,
+    xaxis_title_font_size=12,
+    yaxis_title_font_size=12
+)
+
+# ------------------ Figuras a json---------
+
+import plotly.io as pio
+import re
+import unidecode  # asegúrate de tenerlo instalado con: pip install unidecode
+
+# Lista con todas las figuras
+figs = [
+    fig_1, fig_2, fig_3, fig_4, fig_5, fig_6,
+    fig_7, fig_8, fig_9, fig_10, fig_11, fig_12,
+    fig_13, fig_14, fig_15, fig_16, fig_17, fig_18, fig_19, fig_20
+]
+
+# Función para limpiar el título y crear un nombre de archivo seguro
+def clean_title(title):
+    # Eliminar acentos, signos raros y dejar solo letras, números y guiones bajos
+    title = unidecode.unidecode(title)
+    title = re.sub(r'[^A-Za-z0-9 _-]', '', title)
+    title = title.replace(' ', '_')
+    return title.strip('_')
+
+# Guardar cada figura con su título como nombre
+for fig in figs:
+    title = fig.layout.title.text or "grafico_sin_titulo"
+    filename = clean_title(title) + ".json"
+    pio.write_json(fig, filename)
+    print(f"✅ Guardado: {filename}")
+
+# === CREAR CARPETA DE EXPORTACIÓN ===
+import os
+output_folder = "json_datasets"
+os.makedirs(output_folder, exist_ok=True)
+
+# === EXPORTAR A JSON ===
+datasets = {
+    "clinicas_backbone.json": clinicas_backbone,
+    "enfermedades_municipios.json": enfermedades_municipios,
+    "merged.json": merged
+}
+
+for filename, df in datasets.items():
+    output_path = os.path.join(output_folder, filename)
+    df.to_json(output_path, orient='records', indent=4, force_ascii=False)
+    print(f"✅ Guardado: {output_path}")
+
+
 # =========================================================
 # APP DASH - Layout centrado y ancho completo
 # =========================================================
@@ -433,6 +588,18 @@ def generate_fig13(df):
 
 def generate_fig16(df):
     return fig_16
+
+def generate_fig16(df):
+    return fig_17
+
+def generate_fig16(df):
+    return fig_18
+
+def generate_fig16(df):
+    return fig_19
+
+def generate_fig16(df):
+    return fig_20
 
 # ==========================
 # Crear dashboards
