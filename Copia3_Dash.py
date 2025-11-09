@@ -30,6 +30,14 @@ agrupacion = {
 clinicas_backbone['NSE_final'] = clinicas_backbone['NSE'].map(agrupacion)
 merged = clinicas_backbone.merge(enfermedades_municipios, left_on=['State','Municipality'], right_on=['NOM_ENT','NOM_MUN'])
 
+merged = merged.rename(columns={'Specialty of the \nMedical Equipment': 'Specialty of the Medical Equipment'})
+merged = merged.rename(columns={'Number of \nConsultations per Month': 'Number of Consultations per Month'})
+
+clinicas_backbone = clinicas_backbone.rename(columns={'Specialty of the \nMedical Equipment': 'Specialty of the Medical Equipment'})
+clinicas_backbone = clinicas_backbone.rename(columns={'Number of \nConsultations per Month': 'Number of Consultations per Month'})
+
+
+
 ## Gráfico 1
 
 clinic_counts = merged['Clinic Size'].value_counts().reset_index()
@@ -59,10 +67,10 @@ fig_1.update_traces(
 # Gráfico 2
 top20mun_consultations = (
     clinicas_backbone
-    .groupby(['State', 'Municipality', 'Clinic Size'])['Number of \nConsultations per Month']
+    .groupby(['State', 'Municipality', 'Clinic Size'])['Number of Consultations per Month']
     .mean()
     .reset_index()
-    .sort_values(by='Number of \nConsultations per Month', ascending=False)
+    .sort_values(by='Number of Consultations per Month', ascending=False)
     .head(20)
 )
 
@@ -71,12 +79,12 @@ top20mun_consultations['estado_mun'] = top20mun_consultations['State'] + ', ' + 
 fig_2 = px.bar(
     top20mun_consultations,
     x='estado_mun',
-    y='Number of \nConsultations per Month',
+    y='Number of Consultations per Month',
     color='Clinic Size',
     color_discrete_sequence=px.colors.sequential.Viridis,
     title='Top 20 Promedio de Consultas por Municipio y Tamaño de Clínica',
     hover_data={
-        'Number of \nConsultations per Month': ':.2f',
+        'Number of Consultations per Month': ':.2f',
         'estado_mun': True,
         'Clinic Size': True
     }
@@ -100,10 +108,10 @@ fig_3 = px.scatter_mapbox(
     hover_name='Clinic Aid Code',
     hover_data={
         'Clinic Size': True,
-        'Number of \nConsultations per Month': ':.2f'
+        'Number of Consultations per Month': ':.2f'
     },
     color='Clinic Size',
-    size='Number of \nConsultations per Month',
+    size='Number of Consultations per Month',
     color_discrete_sequence=px.colors.sequential.Viridis,
     mapbox_style='open-street-map',
     zoom=4,
@@ -118,14 +126,14 @@ fig_3.update_layout(
 )
 
 # === FIGURA 4: MAPA DE COBERTURA VULNERABLE ===
-merged['cobertura_pct'] = merged['Number of \nConsultations per Month'] / (merged['PSINDER'] + 1)
+merged['cobertura_pct'] = merged['Number of Consultations per Month'] / (merged['PSINDER'] + 1)
 
 fig_4 = px.scatter_mapbox(
     merged,
     lat='latitud',
     lon='longitud',
     color='cobertura_pct',
-    size='Number of \nConsultations per Month',
+    size='Number of Consultations per Month',
     mapbox_style='open-street-map',
     zoom=4,
     height=600,
@@ -209,9 +217,9 @@ fig_8.update_layout(
 
 fig_9 = px.box(
     clinicas_backbone,
-    x='Specialty of the \nMedical Equipment',
+    x='Specialty of the Medical Equipment',
     y='Average Age of the SME (years)',
-    color='Specialty of the \nMedical Equipment',
+    color='Specialty of the Medical Equipment',
     title='Especialidades con Clínicas con más antigüedad'
 )
 fig_9.update_layout(
@@ -227,14 +235,14 @@ fig_9.update_layout(
 fig_10 = px.scatter(
     merged,
     x='Average Age of the SME (years)',
-    y='Number of \nConsultations per Month',
-    color='Specialty of the \nMedical Equipment',
+    y='Number of Consultations per Month',
+    color='Specialty of the Medical Equipment',
     size='% of Patients with Middle-Low to Low Income',
-    hover_name='Specialty of the \nMedical Equipment',
+    hover_name='Specialty of the Medical Equipment',
     title='Edad vs Consultas por Especialidad (tamaño = % Pacientes vulnerables)',
     labels={
         'Average Age of the SME (years)': 'Años de operación',
-        'Number of \nConsultations per Month': 'Consultas mensuales',
+        'Number of Consultations per Month': 'Consultas mensuales',
         '% of Patients with Middle-Low to Low Income': '% Pacientes bajos recursos'
     }
 )
@@ -242,9 +250,9 @@ fig_10 = px.scatter(
 fig_11 = px.scatter(
     clinicas_backbone,
     x='Total Staff',
-    y='Number of \nConsultations per Month',
+    y='Number of Consultations per Month',
     color='Clinic Size',
-    size='Number of \nConsultations per Month',
+    size='Number of Consultations per Month',
     size_max=40,
     title='Relación entre Personal Médico y Consultas Mensuales'
 )
@@ -254,13 +262,12 @@ fig_11.update_layout(
     title_font_size=16
 )
 
-clinicas_backbone['consultas_por_staff'] = clinicas_backbone['Number of \nConsultations per Month'] / clinicas_backbone['Total Staff']
-
+clinicas_backbone['consultas_por_staff'] = clinicas_backbone['Number of Consultations per Month'] / clinicas_backbone['Total Staff']
 fig_12 = px.box(
     clinicas_backbone,
-    x='Specialty of the \nMedical Equipment',
+    x='Specialty of the Medical Equipment',
     y='consultas_por_staff',
-    color='Specialty of the \nMedical Equipment',
+    color='Specialty of the Medical Equipment',
     title='Consultas por Personal por Especialidad del Equipo Médico'
 )
 fig_12.update_layout(
@@ -282,11 +289,10 @@ fig_13 = px.scatter_mapbox(
     lon='longitud',
     hover_name='Clinic Aid Code',
     color='NSE_final',
-    size='% of Patients with Middle-Low to Low Income',
     mapbox_style='open-street-map',
     zoom=4,
     height=600,
-    title='NSE de Clínicas Backbone por % de Pacientes bajos ingresos'
+    title='Mapa de las Clínicas Backbone por NSE'
 )
 fig_13.update_layout(
     title_font_size=18,
@@ -297,8 +303,8 @@ fig_13.update_layout(
 import numpy as np
 
 # Preparar DataFrame con ratio
-df = clinicas_backbone[['Clinic Aid Code', 'Clinic Size', 'Number of \nConsultations per Month', 'Total Staff', 'City', 'Specialty of the \nMedical Equipment']].copy()
-df['operational_ratio'] = df['Number of \nConsultations per Month'] / df['Total Staff']
+df = clinicas_backbone[['Clinic Aid Code', 'Clinic Size', 'Number of Consultations per Month', 'Total Staff', 'City', 'Specialty of the Medical Equipment']].copy()
+df['operational_ratio'] = df['Number of Consultations per Month'] / df['Total Staff']
 limits = {'Micro': 100, 'Small': 150, 'Medium': 200}
 df['overloaded'] = df.apply(lambda x: x['operational_ratio'] > limits.get(x['Clinic Size'], np.inf), axis=1)
 overloaded_clinics = df[df['overloaded']]
@@ -319,7 +325,7 @@ fig_14 = px.bar(
 fig_14.update_layout(yaxis=dict(autorange="reversed"))  # Invertir eje y para barras horizontales
 
 # fig_15 → Por Specialty
-spec_counts = overloaded_clinics['Specialty of the \nMedical Equipment'].value_counts().head(10).reset_index()
+spec_counts = overloaded_clinics['Specialty of the Medical Equipment'].value_counts().head(10).reset_index()
 spec_counts.columns = ['Especialidad', 'Cantidad']
 
 fig_15 = px.bar(
@@ -346,8 +352,6 @@ fig_16 = px.pie(
 )
 fig_16.update_traces(textinfo='percent+label', pull=[0.05]*len(nse_counts))
 fig_16.update_layout(title_font_size=16)
-
-merged = merged.rename(columns={'Specialty of the \nMedical Equipment': 'Specialty of the Medical Equipment'})
 
 # Paso 1: contar cuántas clínicas hay por especialidad
 counts = merged['Specialty of the Medical Equipment'].value_counts().reset_index()
@@ -381,7 +385,7 @@ fig_17.update_traces(
 )
 
 # === FIGURA 18 ===
-clinicas_backbone = clinicas_backbone.rename(columns={'Specialty of the \nMedical Equipment': 'Specialty of the Medical Equipment'})
+clinicas_backbone = clinicas_backbone.rename(columns={'Specialty of the Medical Equipment': 'Specialty of the Medical Equipment'})
 fig_18 = px.scatter_mapbox(
     clinicas_backbone,
     lat='latitud',
@@ -413,7 +417,7 @@ fig_18.update_traces(
 promedios = (
     clinicas_backbone
     .groupby('Specialty of the Medical Equipment', as_index=False)
-    ['Number of \nConsultations per Month']
+    ['Number of Consultations per Month']
     .mean()
 )
 
@@ -421,10 +425,10 @@ promedios = (
 fig_19 = px.bar(
     promedios,
     x='Specialty of the Medical Equipment',
-    y='Number of \nConsultations per Month',
+    y='Number of Consultations per Month',
     title='Promedio de Consultas por Especialidad',
     hover_data={
-        'Number of \nConsultations per Month': ':.2f',
+        'Number of Consultations per Month': ':.2f',
     },
     color='Specialty of the Medical Equipment',  # opcional: colorear por especialidad
 )
@@ -443,10 +447,10 @@ fig_19.update_layout(
 fig_20 = px.bar(
     merged,
     x='NSE_final',
-    y='Number of \nConsultations per Month',
+    y='Number of Consultations per Month',
     title='Total de Consultas por NSE',
     hover_data={
-        'Number of \nConsultations per Month': ':.2f',
+        'Number of Consultations per Month': ':.2f',
     },
     color='NSE_final',  # opcional: colorear por especialidad
 )
@@ -461,50 +465,50 @@ fig_20.update_layout(
     yaxis_title_font_size=12
 )
 
-# ------------------ Figuras a json---------
+# # ------------------ Figuras a json---------
 
-import plotly.io as pio
-import re
-import unidecode  # asegúrate de tenerlo instalado con: pip install unidecode
+# import plotly.io as pio
+# import re
+# import unidecode  # asegúrate de tenerlo instalado con: pip install unidecode
 
-# Lista con todas las figuras
-figs = [
-    fig_1, fig_2, fig_3, fig_4, fig_5, fig_6,
-    fig_7, fig_8, fig_9, fig_10, fig_11, fig_12,
-    fig_13, fig_14, fig_15, fig_16, fig_17, fig_18, fig_19, fig_20
-]
+# # Lista con todas las figuras
+# figs = [
+#     fig_1, fig_2, fig_3, fig_4, fig_5, fig_6,
+#     fig_7, fig_8, fig_9, fig_10, fig_11, fig_12,
+#     fig_13, fig_14, fig_15, fig_16, fig_17, fig_18, fig_19, fig_20
+# ]
 
-# Función para limpiar el título y crear un nombre de archivo seguro
-def clean_title(title):
-    # Eliminar acentos, signos raros y dejar solo letras, números y guiones bajos
-    title = unidecode.unidecode(title)
-    title = re.sub(r'[^A-Za-z0-9 _-]', '', title)
-    title = title.replace(' ', '_')
-    return title.strip('_')
+# # Función para limpiar el título y crear un nombre de archivo seguro
+# def clean_title(title):
+#     # Eliminar acentos, signos raros y dejar solo letras, números y guiones bajos
+#     title = unidecode.unidecode(title)
+#     title = re.sub(r'[^A-Za-z0-9 _-]', '', title)
+#     title = title.replace(' ', '_')
+#     return title.strip('_')
 
-# Guardar cada figura con su título como nombre
-for fig in figs:
-    title = fig.layout.title.text or "grafico_sin_titulo"
-    filename = clean_title(title) + ".json"
-    pio.write_json(fig, filename)
-    print(f"✅ Guardado: {filename}")
+# # Guardar cada figura con su título como nombre
+# for fig in figs:
+#     title = fig.layout.title.text or "grafico_sin_titulo"
+#     filename = clean_title(title) + ".json"
+#     pio.write_json(fig, filename)
+#     print(f"✅ Guardado: {filename}")
 
-# === CREAR CARPETA DE EXPORTACIÓN ===
-import os
-output_folder = "json_datasets"
-os.makedirs(output_folder, exist_ok=True)
+# # === CREAR CARPETA DE EXPORTACIÓN ===
+# import os
+# output_folder = "json_datasets"
+# os.makedirs(output_folder, exist_ok=True)
 
-# === EXPORTAR A JSON ===
-datasets = {
-    "clinicas_backbone.json": clinicas_backbone,
-    "enfermedades_municipios.json": enfermedades_municipios,
-    "merged.json": merged
-}
+# # === EXPORTAR A JSON ===
+# datasets = {
+#     "clinicas_backbone.json": clinicas_backbone,
+#     "enfermedades_municipios.json": enfermedades_municipios,
+#     "merged.json": merged
+# }
 
-for filename, df in datasets.items():
-    output_path = os.path.join(output_folder, filename)
-    df.to_json(output_path, orient='records', indent=4, force_ascii=False)
-    print(f"✅ Guardado: {output_path}")
+# for filename, df in datasets.items():
+#     output_path = os.path.join(output_folder, filename)
+#     df.to_json(output_path, orient='records', indent=4, force_ascii=False)
+#     print(f"✅ Guardado: {output_path}")
 
 
 # =========================================================
@@ -640,10 +644,10 @@ def create_dashboards(estado_filtro=None):
     # === Gráfico 2 - Actualizado ===
     top20mun_consultations = (
         clinicas_filtradas
-        .groupby(['State', 'Municipality', 'Clinic Size'])['Number of \nConsultations per Month']
+        .groupby(['State', 'Municipality', 'Clinic Size'])['Number of Consultations per Month']
         .mean()
         .reset_index()
-        .sort_values(by='Number of \nConsultations per Month', ascending=False)
+        .sort_values(by='Number of Consultations per Month', ascending=False)
         .head(20)
     )
 
@@ -652,12 +656,12 @@ def create_dashboards(estado_filtro=None):
     fig_2 = px.bar(
         top20mun_consultations,
         x='estado_mun',
-        y='Number of \nConsultations per Month',
+        y='Number of Consultations per Month',
         color='Clinic Size',
         color_discrete_sequence=px.colors.sequential.Viridis,
         title=f'Top 20 Promedio de Consultas por Municipio y Tamaño de Clínica{" - " + estado_filtro if estado_filtro and estado_filtro != "Todos" else ""}',
         hover_data={
-            'Number of \nConsultations per Month': ':.2f',
+            'Number of Consultations per Month': ':.2f',
             'estado_mun': True,
             'Clinic Size': True
         }
@@ -680,10 +684,10 @@ def create_dashboards(estado_filtro=None):
         hover_name='Clinic Aid Code',
         hover_data={
             'Clinic Size': True,
-            'Number of \nConsultations per Month': ':.2f'
+            'Number of Consultations per Month': ':.2f'
         },
         color='Clinic Size',
-        size='Number of \nConsultations per Month',
+        size='Number of Consultations per Month',
         color_discrete_sequence=px.colors.sequential.Viridis,
         mapbox_style='open-street-map',
         zoom=4,
@@ -697,14 +701,14 @@ def create_dashboards(estado_filtro=None):
     )
 
     # === FIGURA 4: MAPA DE COBERTURA VULNERABLE - Actualizado ===
-    merged_filtrado['cobertura_pct'] = merged_filtrado['Number of \nConsultations per Month'] / (merged_filtrado['PSINDER'] + 1)
+    merged_filtrado['cobertura_pct'] = merged_filtrado['Number of Consultations per Month'] / (merged_filtrado['PSINDER'] + 1)
 
     fig_4 = px.scatter_mapbox(
         merged_filtrado,
         lat='latitud',
         lon='longitud',
         color='cobertura_pct',
-        size='Number of \nConsultations per Month',
+        size='Number of Consultations per Month',
         mapbox_style='open-street-map',
         zoom=4,
         height=600,
@@ -786,9 +790,9 @@ def create_dashboards(estado_filtro=None):
     # === FIGURA 9: BOXPLOT ESPECIALIDADES - Actualizado ===
     fig_9 = px.box(
         clinicas_filtradas,
-        x='Specialty of the \nMedical Equipment',
+        x='Specialty of the Medical Equipment',
         y='Average Age of the SME (years)',
-        color='Specialty of the \nMedical Equipment',
+        color='Specialty of the Medical Equipment',
         title=f'Especialidades con Clínicas con más antigüedad{" - " + estado_filtro if estado_filtro and estado_filtro != "Todos" else ""}'
     )
     fig_9.update_layout(
@@ -805,14 +809,14 @@ def create_dashboards(estado_filtro=None):
     fig_10 = px.scatter(
         merged_filtrado,
         x='Average Age of the SME (years)',
-        y='Number of \nConsultations per Month',
-        color='Specialty of the \nMedical Equipment',
+        y='Number of Consultations per Month',
+        color='Specialty of the Medical Equipment',
         size='% of Patients with Middle-Low to Low Income',
-        hover_name='Specialty of the \nMedical Equipment',
+        hover_name='Specialty of the Medical Equipment',
         title=f'Edad vs Consultas por Especialidad{" - " + estado_filtro if estado_filtro and estado_filtro != "Todos" else ""}',
         labels={
             'Average Age of the SME (years)': 'Años de operación',
-            'Number of \nConsultations per Month': 'Consultas mensuales',
+            'Number of Consultations per Month': 'Consultas mensuales',
             '% of Patients with Middle-Low to Low Income': '% Pacientes bajos recursos'
         }
     )
@@ -821,9 +825,9 @@ def create_dashboards(estado_filtro=None):
     fig_11 = px.scatter(
         clinicas_filtradas,
         x='Total Staff',
-        y='Number of \nConsultations per Month',
+        y='Number of Consultations per Month',
         color='Clinic Size',
-        size='Number of \nConsultations per Month',
+        size='Number of Consultations per Month',
         size_max=40,
         title=f'Relación entre Personal Médico y Consultas Mensuales{" - " + estado_filtro if estado_filtro and estado_filtro != "Todos" else ""}'
     )
@@ -834,13 +838,13 @@ def create_dashboards(estado_filtro=None):
     )
 
     # === FIGURA 12: BOX CONSULTAS POR PERSONAL - Actualizado ===
-    clinicas_filtradas['consultas_por_staff'] = clinicas_filtradas['Number of \nConsultations per Month'] / clinicas_filtradas['Total Staff']
+    clinicas_filtradas['consultas_por_staff'] = clinicas_filtradas['Number of Consultations per Month'] / clinicas_filtradas['Total Staff']
 
     fig_12 = px.box(
         clinicas_filtradas,
-        x='Specialty of the \nMedical Equipment',
+        x='Specialty of the Medical Equipment',
         y='consultas_por_staff',
-        color='Specialty of the \nMedical Equipment',
+        color='Specialty of the Medical Equipment',
         title=f'Consultas por Personal por Especialidad del Equipo Médico{" - " + estado_filtro if estado_filtro and estado_filtro != "Todos" else ""}'
     )
     fig_12.update_layout(
@@ -867,7 +871,7 @@ def create_dashboards(estado_filtro=None):
         mapbox_style='open-street-map',
         zoom=4,
         height=600,
-        title=f'NSE de Clínicas Backbone por % de Pacientes bajos ingresos{" - " + estado_filtro if estado_filtro and estado_filtro != "Todos" else ""}'
+        title=f'Mapa de Clínicas Backbone por NSE{" - " + estado_filtro if estado_filtro and estado_filtro != "Todos" else ""}'
     )
     fig_13.update_layout(
         title_font_size=18,
@@ -876,8 +880,8 @@ def create_dashboards(estado_filtro=None):
     )
 
     # === FIGURAS 14-15: CLÍNICAS SOBRECARGADAS - Actualizado ===
-    df = clinicas_filtradas[['Clinic Aid Code', 'Clinic Size', 'Number of \nConsultations per Month', 'Total Staff', 'City', 'Specialty of the \nMedical Equipment']].copy()
-    df['operational_ratio'] = df['Number of \nConsultations per Month'] / df['Total Staff']
+    df = clinicas_filtradas[['Clinic Aid Code', 'Clinic Size', 'Number of Consultations per Month', 'Total Staff', 'City', 'Specialty of the Medical Equipment']].copy()
+    df['operational_ratio'] = df['Number of Consultations per Month'] / df['Total Staff']
     limits = {'Micro': 100, 'Small': 150, 'Medium': 200}
     df['overloaded'] = df.apply(lambda x: x['operational_ratio'] > limits.get(x['Clinic Size'], np.inf), axis=1)
     overloaded_clinics = df[df['overloaded']]
@@ -898,7 +902,7 @@ def create_dashboards(estado_filtro=None):
     fig_14.update_layout(yaxis=dict(autorange="reversed"))
 
     # fig_15 → Por Specialty
-    spec_counts = overloaded_clinics['Specialty of the \nMedical Equipment'].value_counts().head(10).reset_index()
+    spec_counts = overloaded_clinics['Specialty of the Medical Equipment'].value_counts().head(10).reset_index()
     spec_counts.columns = ['Especialidad', 'Cantidad']
 
     fig_15 = px.bar(
@@ -926,116 +930,252 @@ def create_dashboards(estado_filtro=None):
     fig_16.update_traces(textinfo='percent+label', pull=[0.05]*len(nse_counts))
     fig_16.update_layout(title_font_size=16)
 
-    # ... (el resto del código de los dashboards permanece igual, usando las figuras actualizadas)
+    # === FIGURA 17: Distribución de especialidades (agrupadas <5%) ===
+    # Paso 1: contar cuántas clínicas hay por especialidad
+    counts = merged_filtrado['Specialty of the Medical Equipment'].value_counts().reset_index()
+    counts.columns = ['Specialty of the Medical Equipment', 'Count']
+
+    # Paso 2: calcular porcentaje
+    counts['Percentage'] = 100 * counts['Count'] / counts['Count'].sum()
+
+    # Paso 3: agrupar las especialidades con <5% en "Others"
+    others = counts[counts['Percentage'] < 5]['Count'].sum()
+    main = counts[counts['Percentage'] >= 5].copy()
+
+    # agregar la categoría Others
+    if others > 0:
+        main.loc[len(main)] = ['Others', others, 100 * others / counts['Count'].sum()]
+
+    # Paso 4: graficar
+    fig_17 = px.pie(
+        main,
+        names='Specialty of the Medical Equipment',
+        values='Count',
+        title=f'Distribución de especialidades de clínicas (agrupadas <5%){" - " + estado_filtro if estado_filtro and estado_filtro != "Todos" else ""}',
+        color='Specialty of the Medical Equipment',
+        hover_data=['Percentage']
+    )
+
+    fig_17.update_traces(
+        textposition='inside',
+        textinfo='percent+label',
+        hoverinfo='label+percent+name'
+    )
+
+    # === FIGURA 18: Mapa de clínicas por especialidad ===
+    fig_18 = px.scatter_mapbox(
+        clinicas_filtradas,
+        lat='latitud',
+        lon='longitud',
+        hover_name='Clinic Aid Code',
+        hover_data={
+            'Specialty of the Medical Equipment': True,
+            'Clinic Size': True,
+            'Number of Consultations per Month': True
+        },
+        color='Specialty of the Medical Equipment',
+        color_discrete_sequence=px.colors.sequential.Viridis,
+        mapbox_style='open-street-map',
+        zoom=4,
+        height=600,
+        title=f'Mapa de Clínicas Backbone por Especialidad{" - " + estado_filtro if estado_filtro and estado_filtro != "Todos" else ""}'
+    )
+
+    fig_18.update_layout(
+        title_font_size=18,
+        margin=dict(l=20, r=20, t=60, b=20),
+        mapbox=dict(center=dict(lat=23.6345, lon=-102.5528)),
+    )
+
+    fig_18.update_traces(
+        marker=dict(size=12),
+        selector=dict(mode='markers')
+    )
+
+    # === FIGURA 19: Promedio de consultas por especialidad ===
+    # Paso 1: calcular promedio de consultas por especialidad
+    promedios = (
+        clinicas_filtradas
+        .groupby('Specialty of the Medical Equipment', as_index=False)
+        ['Number of Consultations per Month']
+        .mean()
+        .sort_values('Number of Consultations per Month', ascending=False)
+    )
+
+    # Paso 2: graficar los promedios
+    fig_19 = px.bar(
+        promedios,
+        x='Specialty of the Medical Equipment',
+        y='Number of Consultations per Month',
+        title=f'Promedio de Consultas por Especialidad{" - " + estado_filtro if estado_filtro and estado_filtro != "Todos" else ""}',
+        hover_data={
+            'Number of Consultations per Month': ':.2f',
+        },
+        color='Specialty of the Medical Equipment',
+    )
+
+    # Paso 3: personalizar diseño
+    fig_19.update_layout(
+        xaxis_title='Especialidad',
+        yaxis_title='Promedio de Consultas por Mes',
+        xaxis_tickangle=-45,
+        showlegend=False,
+        title_font_size=16,
+        xaxis_title_font_size=12,
+        yaxis_title_font_size=12
+    )
+
+    # === FIGURA 20: Total de consultas por NSE ===
+    # Agrupar por NSE y sumar las consultas
+    nse_consultas = (
+        merged_filtrado
+        .groupby('NSE_final', as_index=False)
+        ['Number of Consultations per Month']
+        .sum()
+        .sort_values('Number of Consultations per Month', ascending=False)
+    )
+
+    fig_20 = px.bar(
+        nse_consultas,
+        x='NSE_final',
+        y='Number of Consultations per Month',
+        title=f'Total de Consultas por NSE{" - " + estado_filtro if estado_filtro and estado_filtro != "Todos" else ""}',
+        hover_data={
+            'Number of Consultations per Month': ':.2f',
+        },
+        color='NSE_final',
+    )
+
+    fig_20.update_layout(
+        xaxis_title='NSE',
+        yaxis_title='Total de Consultas por Mes',
+        xaxis_tickangle=-45,
+        showlegend=False,
+        title_font_size=16,
+        xaxis_title_font_size=12,
+        yaxis_title_font_size=12
+    )
+    # === DASHBOARDS REORGANIZADOS ===
     
-    # Dashboard 1
+    # Dashboard 1: fig_13, fig_16, fig_17
     dashboard1 = html.Div([
-        html.H2(f"Distribución y Ubicación de Clínicas{'' if not estado_filtro or estado_filtro == 'Todos' else ' - ' + estado_filtro}", style={'textAlign': 'center'}),
+        html.H2(
+            f"Clínicas Backbone{' - ' + estado_filtro if estado_filtro and estado_filtro != 'Todos' else ''}",
+            style={'textAlign': 'center'}
+        ),
         html.Div([
-            dcc.Graph(figure=fig_1, style={'gridArea': 'fig1', 'height': '400px'}, config={'responsive': True}),
-            dcc.Graph(figure=fig_2, style={'gridArea': 'fig2', 'height': '500px'}, config={'responsive': True}),
-            dcc.Graph(figure=fig_3, style={'gridArea': 'fig3', 'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_13, style={'gridArea': 'fig13', 'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_16, style={'gridArea': 'fig16', 'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_17, style={'gridArea': 'fig17', 'height': '500px'}, config={'responsive': True}),
         ], style={
             'display': 'grid',
-            'gridTemplateColumns': '1fr 2fr',
+            'gridTemplateColumns': '1fr 1fr',
             'gridTemplateRows': 'auto auto',
             'gridTemplateAreas': '''
-                "fig1 fig3"
-                "fig2 fig2"
+                "fig16 fig17"
+                "fig13 fig13"
             ''',
-            'gap': '5px',
+            'gap': '10px',
             'justifyItems': 'stretch',
             'alignItems': 'stretch'
         })
     ])
 
-    # Dashboard 2
+    # Dashboard 2: fig_3, fig_18, fig_19, fig_20
     dashboard2 = html.Div([
-        html.H2(f"Cobertura y Distribución de Pacientes{'' if not estado_filtro or estado_filtro == 'Todos' else ' - ' + estado_filtro}", style={'textAlign': 'center'}),
-        
-        # Primera fila
+        html.H2(
+            f"Población beneficiada{' - ' + estado_filtro if estado_filtro and estado_filtro != 'Todos' else ''}",
+            style={'textAlign': 'center'}
+        ),
         html.Div([
-            dcc.Graph(figure=fig_5, style={'height': '350px'}, config={'responsive': True}),
-            dcc.Graph(figure=fig_7, style={'height': '350px'}, config={'responsive': True}),
-        ], style={
-            'display': 'grid',
-            'gridTemplateColumns': '3fr 2fr',
-            'gap': '5px'
-        }),
-        
-        # Segunda fila
-        html.Div([
-            dcc.Graph(figure=fig_6, style={'height': '400px'}, config={'responsive': True}),
-            dcc.Graph(figure=fig_4, style={'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_3, style={'gridArea': 'fig3', 'height': '500px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_18, style={'gridArea': 'fig18', 'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_19, style={'gridArea': 'fig19', 'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_20, style={'gridArea': 'fig20', 'height': '500px'}, config={'responsive': True}),
         ], style={
             'display': 'grid',
             'gridTemplateColumns': '1fr 1fr',
-            'gap': '5px',
-            'justifyItems': 'center'
-        }),
-    ])
-
-    # Dashboard 3
-    dashboard3 = html.Div([
-        html.H2(f"Desempeño Operativo y Consultas{'' if not estado_filtro or estado_filtro == 'Todos' else ' - ' + estado_filtro}", style={'textAlign': 'center'}),
-        html.Div([
-            dcc.Graph(figure=fig_8, style={'gridArea': 'fig8', 'height': '400px'}, config={'responsive': True}),
-            dcc.Graph(figure=fig_9, style={'gridArea': 'fig9', 'height': '400px'}, config={'responsive': True}),
-            dcc.Graph(figure=fig_10, style={'gridArea': 'fig10', 'height': '800px'}, config={'responsive': True}),
-        ], style={
-            'display': 'grid',
-            'gridTemplateColumns': '3fr 2fr',
             'gridTemplateRows': 'auto auto',
             'gridTemplateAreas': '''
-                "fig8 fig10"
-                "fig9 fig10"
+                "fig20 fig19"
+                "fig3 fig3"
+                "fig18 fig18"
             ''',
-            'gap': '5px',
-            'justifyItems': 'center'
+            'gap': '10px',
+            'justifyItems': 'stretch'
         })
     ])
 
-    # Dashboard 4
-    dashboard4 = html.Div([
-        html.H2(f"Capacidad vs Demanda{'' if not estado_filtro or estado_filtro == 'Todos' else ' - ' + estado_filtro}", style={'textAlign': 'center'}),
+    # Dashboard 3: fig_1, fig_4, fig_8, fig_9
+    dashboard3 = html.Div([
+        html.H2(
+            f"Perfil general de las clínicas{' - ' + estado_filtro if estado_filtro and estado_filtro != 'Todos' else ''}",
+            style={'textAlign': 'center'}
+        ),
         html.Div([
-            dcc.Graph(figure=fig_11, style={'gridArea': 'fig11', 'height': '450px'}, config={'responsive': True}),
-            dcc.Graph(figure=fig_12, style={'gridArea': 'fig12', 'height': '450px'}, config={'responsive': True}),
-            dcc.Graph(figure=fig_14, style={'gridArea': 'fig14', 'height': '350px'}, config={'responsive': True}),
-            dcc.Graph(figure=fig_15, style={'gridArea': 'fig15', 'height': '350px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_1, style={'gridArea': 'fig1', 'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_4, style={'gridArea': 'fig4', 'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_8, style={'gridArea': 'fig8', 'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_9, style={'gridArea': 'fig9', 'height': '400px'}, config={'responsive': True}),
         ], style={
             'display': 'grid',
-            'gridTemplateColumns': '2fr 3fr',
+            'gridTemplateColumns': '1fr 1fr',
             'gridTemplateRows': 'auto auto',
+            'gridTemplateAreas': '''
+                "fig1 fig8 fig9"
+                "fig4 fig4 fig4"
+            ''',
+            'gap': '10px',
+            'justifyItems': 'stretch'
+        })
+    ])
+
+    # Dashboard 4: fig_11, fig_12, fig_15, fig_14
+    dashboard4 = html.Div([
+        html.H2(
+            f"Perfil operatorio de las clínicas{' - ' + estado_filtro if estado_filtro and estado_filtro != 'Todos' else ''}",
+            style={'textAlign': 'center'}
+        ),
+        html.Div([
+            dcc.Graph(figure=fig_11, style={'gridArea': 'fig11', 'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_12, style={'gridArea': 'fig12', 'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_15, style={'gridArea': 'fig15', 'height': '500px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_14, style={'gridArea': 'fig14', 'height': '400px'}, config={'responsive': True}),
+        ], style={
+            'display': 'grid',
+            'gridTemplateColumns': '1fr 1fr',
+            'gridTemplateRows': 'auto auto auto',
             'gridTemplateAreas': '''
                 "fig11 fig12"
                 "fig14 fig15"
             ''',
-            'gap': '5px',
-            'justifyItems': 'center'
+            'gap': '10px',
+            'justifyItems': 'stretch'
         })
     ])
 
-    # Dashboard 5
+    # Dashboard 5: fig_7, fig_5, fig_6
     dashboard5 = html.Div([
-        html.H2(f"NSE de las clínicas{'' if not estado_filtro or estado_filtro == 'Todos' else ' - ' + estado_filtro}", style={'textAlign': 'center'}),
+        html.H2(
+            f"Perfil de los pacientes{' - ' + estado_filtro if estado_filtro and estado_filtro != 'Todos' else ''}",
+            style={'textAlign': 'center'}
+        ),
         html.Div([
-            dcc.Graph(figure=fig_13, style={'gridArea': 'fig13', 'height': '500px'}, config={'responsive': True}),
-            dcc.Graph(figure=fig_16, style={'gridArea': 'fig16', 'height': '500px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_7, style={'gridArea': 'fig7', 'height': '500px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_5, style={'gridArea': 'fig5', 'height': '400px'}, config={'responsive': True}),
+            dcc.Graph(figure=fig_6, style={'gridArea': 'fig6', 'height': '500px'}, config={'responsive': True}),
         ], style={
             'display': 'grid',
-            'gridTemplateColumns': '1fr 2fr',
-            'gridTemplateRows': 'auto',
+            'gridTemplateColumns': '1fr 1fr',
+            'gridTemplateRows': 'auto auto',
             'gridTemplateAreas': '''
-                "fig16 fig13"
+                "fig5 fig7"
+                "fig6 fig6"
             ''',
-            'gap': '5px',
-            'justifyItems': 'center'
+            'gap': '10px',
+            'justifyItems': 'stretch'
         })
     ])
-
-
-    # ... (repetir para los demás dashboards con las figuras actualizadas)
 
     return {
         'dashboard1': dashboard1,
@@ -1069,14 +1209,14 @@ app.layout = html.Div([
     ], style={'marginBottom': '20px', 'textAlign': 'center'}),
 
     dcc.Tabs(id='tabs', value='dashboard1', children=[
-        dcc.Tab(label='Dashboard 1 – General', value='dashboard1'),
-        dcc.Tab(label='Dashboard 2 – Cobertura y Especialidades', value='dashboard2'),
-        dcc.Tab(label='Dashboard 3 – Desempeño y Consultas', value='dashboard3'),
-        dcc.Tab(label='Dashboard 4 – Capacidad vs Demanda', value='dashboard4'),
-        dcc.Tab(label='Dashboard 5 – NSE de las clínicas', value='dashboard5'),
+        dcc.Tab(label='Dashboard 1 – Clínicas Backbone', value='dashboard1'),
+        dcc.Tab(label='Dashboard 2 – Población beneficiada', value='dashboard2'),
+        dcc.Tab(label='Dashboard 3 – Perfil general de las clínicas', value='dashboard3'),
+        dcc.Tab(label='Dashboard 4 – Perfil operatio de las clínicas', value='dashboard4'),
+        dcc.Tab(label='Dashboard 5 – Perfil de los pacientes', value='dashboard5'),
     ]),
 
-    # Contenedor para los dashboards (ahora se generan dinámicamente)
+    # Contenedor para los dashboards
     html.Div(id='dashboard-content')
 ])
 
