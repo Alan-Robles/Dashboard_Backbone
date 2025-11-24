@@ -6,9 +6,12 @@ import geopandas as gpd
 import json
 from utils import crear_buffer, buffers_gdf, buffers_coords, NSE_Conjunto_AGEBS, AGEBS_Ponderados
 
+url_clinicas = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/clinicas_con_ageb_y_nse.csv"
+url_ageb = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/AGEB_NSE_NL.geojson"
+
 # Cargar datos una sola vez (fuera de las funciones)
-gdf = gpd.read_file("/Users/alanrobles/Downloads/AGEBS_NSE_NL.geojson")
-df_full = pd.read_csv('/Users/alanrobles/Documents/GEOSTATS/CSV descragados (data)/clinicas_con_ageb_y_nse.csv')
+gdf = gpd.read_file(url_ageb)
+df_full = pd.read_csv(url_clinicas)
 df_nl = df_full[df_full["State"]=="Nuevo León"]
 
 def create_ageb_layout():
