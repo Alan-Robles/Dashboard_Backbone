@@ -9,6 +9,9 @@ from sklearn.cluster import KMeans
 import dash
 from dash import dcc, html
 
+import sys
+import os
+
 # Agrega el directorio actual al path para poder importar
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
