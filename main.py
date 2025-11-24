@@ -7,7 +7,7 @@ import json
 from utils import crear_buffer, buffers_gdf, buffers_coords, NSE_Conjunto_AGEBS, AGEBS_Ponderados
 
 url_clinicas = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/clinicas_con_ageb_y_nse.csv"
-url_ageb = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/AGEB_NSE_NL.geojson"
+url_ageb = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/AGEBS_NSE_NL.geojson"
 
 # Cargar datos una sola vez (fuera de las funciones)
 gdf = gpd.read_file(url_ageb)
