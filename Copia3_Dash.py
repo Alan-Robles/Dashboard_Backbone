@@ -9,8 +9,14 @@ from sklearn.cluster import KMeans
 import dash
 from dash import dcc, html
 
+# Agrega el directorio actual al path para poder importar
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from main import create_ageb_layout, register_ageb_callbacks
+
 url_clinicas = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/clinicas_con_ageb_y_nse.csv"
 url_enfermedades = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/Datos_por_municipio.csv"
+url_ageb = "https://raw.githubusercontent.com/Alan-Robles/Dashboard_Backbone/main/data/AGEB_NSE_NL.geojson"
 
 clinicas_backbone = pd.read_csv(url_clinicas)
 enfermedades_municipios = pd.read_csv(url_enfermedades)
@@ -525,7 +531,7 @@ import pandas as pd
 # ==========================
 # Inicialización de Dash
 # ==========================
-app = Dash(__name__)
+app = Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
 
 # Configurar caché
@@ -611,7 +617,9 @@ def generate_fig16(df):
 # Crear dashboards
 # ==========================
 @cache.memoize()
-def create_dashboards(estado_filtro=None):
+
+@cache.memoize()
+def create_dashboards(estado_filtro=None, nse_filtro=None, especialidad_filtro=None):
     # Aplicar filtro a los DataFrames principales
     if estado_filtro and estado_filtro != "Todos":
         clinicas_filtradas = clinicas_backbone[clinicas_backbone['State'] == estado_filtro].copy()
@@ -619,6 +627,20 @@ def create_dashboards(estado_filtro=None):
     else:
         clinicas_filtradas = clinicas_backbone.copy()
         merged_filtrado = merged.copy()
+    
+    # Aplicar filtro por NSE
+    if nse_filtro and nse_filtro != "Todos":
+        clinicas_filtradas = clinicas_filtradas[clinicas_filtradas['NSE_final'] == nse_filtro].copy()
+        merged_filtrado = merged_filtrado[merged_filtrado['NSE_final'] == nse_filtro].copy()
+    
+    # Aplicar filtro por especialidad
+    if especialidad_filtro and especialidad_filtro != "Todos":
+        clinicas_filtradas = clinicas_filtradas[clinicas_filtradas['Specialty of the Medical Equipment'] == especialidad_filtro].copy()
+        merged_filtrado = merged_filtrado[merged_filtrado['Specialty of the Medical Equipment'] == especialidad_filtro].copy()
+    
+    # Resto del código de creación de figuras permanece igual...
+    # === Gráfico 1 - Actualizado para usar DataFrame filtrado ===
+    clinic_counts = merged_filtrado['Clinic Size'].value_counts().reset_index()
     
     # === Gráfico 1 - Actualizado para usar DataFrame filtrado ===
     clinic_counts = merged_filtrado['Clinic Size'].value_counts().reset_index()
@@ -1121,7 +1143,7 @@ def create_dashboards(estado_filtro=None):
             dcc.Graph(figure=fig_9, style={'gridArea': 'fig9', 'height': '400px'}, config={'responsive': True}),
         ], style={
             'display': 'grid',
-            'gridTemplateColumns': '1fr 1fr',
+            'gridTemplateColumns': '1fr 1fr 1fr',
             'gridTemplateRows': 'auto auto',
             'gridTemplateAreas': '''
                 "fig1 fig8 fig9"
@@ -1190,50 +1212,115 @@ def create_dashboards(estado_filtro=None):
 # ==========================
 # Layout principal
 # ==========================
-# Obtener lista de estados únicos para el dropdown
+# Obtener opciones únicas para los dropdowns
 estados = ["Todos"] + sorted(clinicas_backbone['State'].dropna().unique().tolist())
+nse_options = ["Todos"] + sorted(clinicas_backbone['NSE_final'].dropna().unique().tolist())
+especialidades = ["Todos"] + sorted(clinicas_backbone['Specialty of the Medical Equipment'].dropna().unique().tolist())
 
 # === Layout principal ===
 app.layout = html.Div([
-    html.H1("Análisis Integral de Clínicas Backbone", style={
-        'textAlign': 'center', 'marginBottom': 20, 'fontFamily': 'Arial, sans-serif', 'color': '#333'
-    }),
-    
-    # Filtro por estado
+    # Header con título y filtros
     html.Div([
-        html.Label("Filtrar por Estado:", style={'fontWeight': 'bold', 'marginRight': '10px'}),
-        dcc.Dropdown(
-            id='estado-filter',
-            options=[{'label': estado, 'value': estado} for estado in estados],
-            value='Todos',
-            style={'width': '300px', 'display': 'inline-block'}
-        )
-    ], style={'marginBottom': '20px', 'textAlign': 'center'}),
+        # Título a la izquierda
+        html.Div([
+            html.H1("Análisis Integral de Clínicas Backbone", style={
+                'margin': '0', 'fontFamily': 'Arial, sans-serif', 'color': '#333'
+            })
+        ], style={'flex': '1'}),
+        
+        # Filtros a la derecha
+        html.Div([
+            # Filtro por estado
+            html.Div([
+                html.Label("Estado:", style={
+                    'fontWeight': 'bold', 
+                    'marginRight': '5px',
+                    'fontSize': '14px'
+                }),
+                dcc.Dropdown(
+                    id='estado-filter',
+                    options=[{'label': estado, 'value': estado} for estado in estados],
+                    value='Todos',
+                    style={'width': '200px', 'display': 'inline-block'},
+                    clearable=False
+                )
+            ], style={'display': 'inline-block', 'marginRight': '20px'}),
+            
+            # Filtro por NSE
+            html.Div([
+                html.Label("NSE:", style={
+                    'fontWeight': 'bold', 
+                    'marginRight': '5px',
+                    'fontSize': '14px'
+                }),
+                dcc.Dropdown(
+                    id='nse-filter',
+                    options=[{'label': nse, 'value': nse} for nse in nse_options],
+                    value='Todos',
+                    style={'width': '150px', 'display': 'inline-block'},
+                    clearable=False
+                )
+            ], style={'display': 'inline-block', 'marginRight': '20px'}),
+            
+            # Filtro por especialidad
+            html.Div([
+                html.Label("Especialidad:", style={
+                    'fontWeight': 'bold', 
+                    'marginRight': '5px',
+                    'fontSize': '14px'
+                }),
+                dcc.Dropdown(
+                    id='especialidad-filter',
+                    options=[{'label': esp, 'value': esp} for esp in especialidades],
+                    value='Todos',
+                    style={'width': '200px', 'display': 'inline-block'},
+                    clearable=False
+                )
+            ], style={'display': 'inline-block'})
+        ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'flex-end'})
+    ], style={
+        'display': 'flex',
+        'justifyContent': 'space-between',
+        'alignItems': 'center',
+        'marginBottom': '20px',
+        'padding': '10px',
+        'backgroundColor': '#f8f9fa',
+        'borderRadius': '5px'
+    }),
 
+    # En tu app.layout, modifica la sección de tabs:
     dcc.Tabs(id='tabs', value='dashboard1', children=[
-        dcc.Tab(label='Dashboard 1 – Clínicas Backbone', value='dashboard1'),
-        dcc.Tab(label='Dashboard 2 – Población beneficiada', value='dashboard2'),
-        dcc.Tab(label='Dashboard 3 – Perfil general de las clínicas', value='dashboard3'),
-        dcc.Tab(label='Dashboard 4 – Perfil operatio de las clínicas', value='dashboard4'),
-        dcc.Tab(label='Dashboard 5 – Perfil de los pacientes', value='dashboard5'),
+    dcc.Tab(label='Dashboard 1 – Clínicas Backbone', value='dashboard1'),
+    dcc.Tab(label='Dashboard 2 – Población beneficiada', value='dashboard2'),
+    dcc.Tab(label='Dashboard 3 – Perfil general de las clínicas', value='dashboard3'),
+    dcc.Tab(label='Dashboard 4 – Perfil operatorio de las clínicas', value='dashboard4'),
+    dcc.Tab(label='Dashboard 5 – Perfil de los pacientes', value='dashboard5'),
+    dcc.Tab(label='Dashboard 6 – Backbone APP', value='dashboard6'),  # NUEVA PESTAÑA
     ]),
 
     # Contenedor para los dashboards
     html.Div(id='dashboard-content')
 ])
 
-# === Callback para actualizar los dashboards cuando cambia el filtro o la pestaña ===
+# === Callback para actualizar los dashboards cuando cambian los filtros o la pestaña ===
 @app.callback(
     Output('dashboard-content', 'children'),
     [Input('tabs', 'value'),
-     Input('estado-filter', 'value')]
+     Input('estado-filter', 'value'),
+     Input('nse-filter', 'value'),
+     Input('especialidad-filter', 'value')]
 )
-def update_dashboard(tab_value, estado_filtro):
-    # Generar dashboards con el filtro aplicado
-    dashboards = create_dashboards(estado_filtro)
-    
-    # Retornar el dashboard correspondiente a la pestaña seleccionada
-    return dashboards.get(tab_value, dashboards['dashboard1'])
+def update_dashboard(tab_value, estado_filtro, nse_filtro, especialidad_filtro):
+    if tab_value == 'dashboard6':
+        # Retorna la app de AGEB
+        return create_ageb_layout()
+    else:
+        # Generar dashboards con los filtros aplicados
+        dashboards = create_dashboards(estado_filtro, nse_filtro, especialidad_filtro)
+        return dashboards.get(tab_value, dashboards['dashboard1'])
+
+# Registra los callbacks de AGEB DESPUÉS de definir la app
+register_ageb_callbacks(app)
 
 # ==========================
 # Ejecutar app
